@@ -1,0 +1,131 @@
+services:
+  etcd1:
+    image: ${REGISTRY}:${ETCD_VERSION}
+    container_name: etcd1
+    ports:
+      - 2379:2379
+      - 2380:2380
+    volumes:
+      - ${DATA_DIR}/etcd1:/etcd-data
+    environment:
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_NAME: ${NAME_1}
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://${HOST_1}:2380
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_ADVERTISE_CLIENT_URLS: http://${HOST_1}:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: ${CLUSTER}
+      ETCD_INITIAL_CLUSTER_STATE: ${CLUSTER_STATE}
+      ETCD_INITIAL_CLUSTER_TOKEN: ${TOKEN}
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  etcd2:
+    image: ${REGISTRY}:${ETCD_VERSION}
+    container_name: etcd2
+    ports:
+      - 2479:2379
+      - 2480:2380
+    volumes:
+      - ${DATA_DIR}/etcd2:/etcd-data
+    environment:
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_NAME: ${NAME_2}
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://${HOST_2}:2380
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_ADVERTISE_CLIENT_URLS: http://${HOST_2}:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: ${CLUSTER}
+      ETCD_INITIAL_CLUSTER_STATE: ${CLUSTER_STATE}
+      ETCD_INITIAL_CLUSTER_TOKEN: ${TOKEN}
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  etcd3:
+    image: ${REGISTRY}:${ETCD_VERSION}
+    container_name: etcd3
+    ports:
+      - 2579:2379
+      - 2580:2380
+    volumes:
+      - ${DATA_DIR}/etcd3:/etcd-data
+    environment:
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_NAME: ${NAME_3}
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://${HOST_3}:2380
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_ADVERTISE_CLIENT_URLS: http://${HOST_3}:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: ${CLUSTER}
+      ETCD_INITIAL_CLUSTER_STATE: ${CLUSTER_STATE}
+      ETCD_INITIAL_CLUSTER_TOKEN: ${TOKEN}
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  registry:
+    build:
+      context: .
+      dockerfile: registry/Dockerfile
+    environment:
+      ETCD_ENDPOINTS: "etcd1:2379,etcd2:2379,etcd3:2379"
+      PORT: "8500"
+    ports:
+      - "8500:8500"
+    depends_on:
+      etcd1:
+        condition: service_healthy
+      etcd2:
+        condition: service_healthy
+      etcd3:
+        condition: service_healthy
+    restart: unless-stopped
+
+  service-b-1:
+    build:
+      context: .
+      dockerfile: service-b/Dockerfile
+    environment:
+      REGISTRY_URL: "http://registry:8500"
+      PORT: "9000"
+      ADVERTISE_ADDR: "service-b-1:9000"
+    ports:
+      - "9001:9000"
+    depends_on:
+      - registry
+ 
+  service-b-2:
+    build:
+      context: .
+      dockerfile: service-b/Dockerfile
+    environment:
+      REGISTRY_URL: "http://registry:8500"
+      PORT: "9000"
+      ADVERTISE_ADDR: "service-b-2:9000"
+    ports:
+      - "9002:9000"
+    depends_on:
+      - registry
+
+  service-a:
+    build:
+      context: .
+      dockerfile: service-a/Dockerfile
+    environment:
+      REGISTRY_URL: "http://registry:8500"
+      PORT: "9010"
+    ports:
+      - "9010:9010"
+    depends_on:
+      - registry
