@@ -2,11 +2,11 @@ package main
 
 // The Registry interfaces with etcd and exposes HTTP API to services:
 //
-//   POST   /services                       register a new instance
-//   PUT    /services/{svc}/{id}/heartbeat  renew TTL
-//   DELETE /services/{svc}/{id}            deregister
-//   GET    /services/{svc}                 list healthy endpoints
-//   GET    /watch/{svc}                    SSE stream of changes
+//   POST   /services              register a new instance, returns lease ID
+//   PUT    /leases/{id}/heartbeat renew TTL
+//   DELETE /leases/{id}           deregister
+//   GET    /services/{svc}        list healthy endpoints
+//   GET    /watch/{svc}           SSE stream of changes
 
 import (
 	"context"
@@ -22,6 +22,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-playground/validator/v10"
+	"github.com/mabhi256/svc-discovery/registry/internal"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -62,6 +64,13 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+
+	registry := internal.NewRegistry(cli, validator.New())
+	r.Post("/services", registry.RegisterHandler)
+	r.Get("/services/{svc}", registry.ListHandler)
+	r.Delete("/services/{svc}/{id}", registry.DeregisterHandler)
+	r.Put("/leases/{id}/heartbeat", registry.HeartbeatHandler)
+	r.Get("/watch/{svc}", registry.WatchHandler)
 
 	// https://github.com/go-chi/chi/blob/master/_examples/graceful/main.go
 	// The HTTP Server
