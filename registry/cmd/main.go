@@ -2,11 +2,11 @@ package main
 
 // The Registry interfaces with etcd and exposes HTTP API to services:
 //
-//   POST   /services              register a new instance, returns lease ID
-//   PUT    /leases/{id}/heartbeat renew TTL
-//   DELETE /leases/{id}           deregister
-//   GET    /services/{svc}        list healthy endpoints
-//   GET    /watch/{svc}           SSE stream of changes
+//   POST   /services              			register a new instance, returns lease ID
+//   PUT    /leases/{id}/heartbeat 			renew TTL
+//   DELETE /leases/{id}           			deregister
+//   GET    /services/{svc}        			list healthy endpoints
+//   GET    /watch/{svc}?revision=<rev>     SSE stream of changes
 
 import (
 	"context"

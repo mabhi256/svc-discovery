@@ -46,12 +46,14 @@ func (registry *Registry) RegisterHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	revision := etcdResp.Header.Revision
 	log.Printf("Registered key=%s addr=%s lease=%x (rev=%v)\n",
-		key, body.Address, lease.ID, etcdResp.Header.Revision)
+		key, body.Address, lease.ID, revision)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(RegisterResponse{
 		LeaseID:   id,
+		Revision:  revision,
 		Heartbeat: Heartbeat,
 	})
 }

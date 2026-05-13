@@ -29,6 +29,7 @@ type RegisterRequest struct {
 
 type RegisterResponse struct {
 	LeaseID   string `json:"lease_id"`
+	Revision  int64  `json:"revision"`
 	Heartbeat int    `json:"heartbeat"`
 }
 
