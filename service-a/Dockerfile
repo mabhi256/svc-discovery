@@ -3,7 +3,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY service-a/ ./service-a/
-RUN go build -o /service-a ./service-a
+RUN go build -o /service-a ./service-a/cmd
 
 FROM alpine:3.23.4
 # RUN apk add --no-cache ca-certificates
