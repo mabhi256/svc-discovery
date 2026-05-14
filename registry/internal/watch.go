@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.etcd.io/etcd/api/v3/mvccpb"
@@ -56,26 +55,24 @@ func (registry *Registry) WatchHandler(w http.ResponseWriter, r *http.Request) {
 
 		case resp := <-watchCh:
 			for _, ev := range resp.Events {
-				sendSSE(ev, prefix, w)
+				sendSSE(ev, w)
 				flusher.Flush()
 			}
 		}
 	}
 }
 
-func sendSSE(ev *clientv3.Event, prefix string, w http.ResponseWriter) {
+func sendSSE(ev *clientv3.Event, w http.ResponseWriter) {
 	var eventType EventType
 
 	switch ev.Type {
 	case mvccpb.PUT:
-		eventType = "PutEvent"
+		eventType = PutEvent
 	case mvccpb.DELETE:
-		eventType = "DeleteEvent"
+		eventType = DeleteEvent
 	}
 
-	leaseID := strings.TrimPrefix(string(ev.Kv.Key), prefix)
-	endpoint := Endpoint{LeaseID: leaseID, Address: string(ev.Kv.Value)}
-	payload := WatchEvent{Type: eventType, Endpoint: endpoint}
+	payload := WatchEvent{Type: eventType, Address: string(ev.Kv.Value)}
 
 	data, err := json.Marshal(payload)
 	if err != nil {

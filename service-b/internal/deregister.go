@@ -15,7 +15,7 @@ func (client *RegistryClient) Deregister(leaseID string) error {
 			continue
 		}
 
-		if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode != http.StatusNoContent {
 			resp.Body.Close()
 			continue
 		}

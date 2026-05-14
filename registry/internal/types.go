@@ -33,11 +33,6 @@ type RegisterResponse struct {
 	Heartbeat int    `json:"heartbeat"`
 }
 
-type Endpoint struct {
-	LeaseID string `json:"lease_id"`
-	Address string `json:"address"`
-}
-
 type EventType string
 
 const (
@@ -46,6 +41,6 @@ const (
 )
 
 type WatchEvent struct {
-	Type     EventType `json:"type"` // "put" | "delete"
-	Endpoint Endpoint  `json:"endpoint"`
+	Type    EventType `json:"type"`
+	Address string    `json:"address"`
 }

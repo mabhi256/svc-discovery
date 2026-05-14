@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -25,11 +24,9 @@ func (registry *Registry) ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	endpoints := make([]Endpoint, 0, len(resp.Kvs))
+	endpoints := make([]string, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		// key is /svc/{name}/{id}
-		id := strings.Split(string(kv.Key), "/")[2]
-		endpoints = append(endpoints, Endpoint{LeaseID: id, Address: string(kv.Value)})
+		endpoints = append(endpoints, string(kv.Value))
 	}
 
 	w.Header().Set("Content-Type", "application/json")

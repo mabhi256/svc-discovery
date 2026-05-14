@@ -25,6 +25,8 @@ func main() {
 	log.Printf("Registered svc=%s (address=%s) with lease=%s",
 		internal.SVC, addr, registration.LeaseID)
 
+	stopHeartbeat := registry.Heartbeat(registration.LeaseID, registration.Heartbeat)
+
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", internal.HealthCheckHandler)
@@ -50,7 +52,9 @@ func main() {
 	defer cancel()
 
 	// 5. Gracefully shut down
+	stopHeartbeat()
 	registry.Deregister(registration.LeaseID)
+
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
