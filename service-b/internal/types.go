@@ -1,12 +1,6 @@
 package internal
 
-import "net/http"
-
 const SVC = "svc-b"
-
-type RegistryClient struct {
-	HttpCli *http.Client
-}
 
 type RegisterRequest struct {
 	Service string `json:"service" validate:"required,min=1,max=64"`

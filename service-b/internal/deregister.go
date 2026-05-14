@@ -5,12 +5,12 @@ import (
 	"net/http"
 )
 
-func (client *RegistryClient) Deregister(leaseID string) error {
+func Deregister(cli *http.Client, leaseID string) error {
 
 	for _, registryUrl := range GetRegistryURL() {
 		url := fmt.Sprintf("%s/services/%s/%s", registryUrl, SVC, leaseID)
 		req, _ := http.NewRequest(http.MethodDelete, url, nil)
-		resp, err := client.HttpCli.Do(req)
+		resp, err := cli.Do(req)
 		if err != nil {
 			continue
 		}

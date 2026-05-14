@@ -7,14 +7,14 @@ import (
 	"net/http"
 )
 
-func (client *RegistryClient) Register() (*RegisterResponse, error) {
+func Register(cli *http.Client) (*RegisterResponse, error) {
 	body, err := json.Marshal(RegisterRequest{Service: SVC, Address: GetAdvertiseAddr()})
 	if err != nil {
 		return nil, fmt.Errorf("marshal register request: %w", err)
 	}
 
 	for _, url := range GetRegistryURL() {
-		resp, err := client.HttpCli.Post(url+"/services", "application/json", bytes.NewReader(body))
+		resp, err := cli.Post(url+"/services", "application/json", bytes.NewReader(body))
 		if err != nil {
 			continue
 		}

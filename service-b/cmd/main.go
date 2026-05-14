@@ -13,11 +13,9 @@ import (
 )
 
 func main() {
-	registry := internal.RegistryClient{
-		HttpCli: &http.Client{Timeout: 5 * time.Second},
-	}
+	cli := &http.Client{Timeout: 5 * time.Second}
 
-	registration, err := registry.Register()
+	registration, err := internal.Register(cli)
 	if err != nil {
 		log.Fatalf("%s", err.Error())
 	}
@@ -25,7 +23,7 @@ func main() {
 	log.Printf("Registered svc=%s (address=%s) with lease=%s",
 		internal.SVC, addr, registration.LeaseID)
 
-	stopHeartbeat := registry.Heartbeat(registration.LeaseID, registration.Heartbeat)
+	stopHeartbeat := internal.Heartbeat(cli, registration.LeaseID, registration.Heartbeat)
 
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
@@ -53,7 +51,7 @@ func main() {
 
 	// 5. Gracefully shut down
 	stopHeartbeat()
-	registry.Deregister(registration.LeaseID)
+	internal.Deregister(cli, registration.LeaseID)
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)

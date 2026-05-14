@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (client *RegistryClient) Heartbeat(leaseID string, period int) func() {
+func Heartbeat(cli *http.Client, leaseID string, period int) func() {
 	stop := make(chan struct{})
 
 	go func() {
@@ -19,7 +19,7 @@ func (client *RegistryClient) Heartbeat(leaseID string, period int) func() {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				if err := client.heartbeatHandler(leaseID); err != nil {
+				if err := heartbeatHandler(cli, leaseID); err != nil {
 					log.Printf("Heartbeat error: %v", err)
 				}
 			}
@@ -30,12 +30,12 @@ func (client *RegistryClient) Heartbeat(leaseID string, period int) func() {
 	return func() { once.Do(func() { close(stop) }) }
 }
 
-func (client *RegistryClient) heartbeatHandler(leaseID string) error {
+func heartbeatHandler(cli *http.Client, leaseID string) error {
 
 	for _, registryUrl := range GetRegistryURL() {
 		url := fmt.Sprintf("%s/leases/%s/heartbeat", registryUrl, leaseID)
 		req, _ := http.NewRequest(http.MethodPut, url, nil)
-		resp, err := client.HttpCli.Do(req)
+		resp, err := cli.Do(req)
 		if err != nil {
 			continue
 		}
