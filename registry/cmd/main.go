@@ -14,9 +14,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -28,26 +26,8 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-func getEndpoints() []string {
-	pointsStr := os.Getenv("ETCD_ENDPOINTS")
-	if pointsStr == "" {
-		return []string{"localhost:2379"}
-	}
-
-	return strings.Split(pointsStr, ",")
-}
-
-func getPort() string {
-	port := os.Getenv("PORT")
-	if port == "" {
-		return "8500"
-	}
-
-	return port
-}
-
 func main() {
-	endpoints := getEndpoints()
+	endpoints := internal.GetEndpoints()
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
@@ -74,7 +54,7 @@ func main() {
 
 	// https://github.com/go-chi/chi/blob/master/_examples/graceful/main.go
 	// The HTTP Server
-	addr := fmt.Sprintf("0.0.0.0:%s", getPort())
+	addr := fmt.Sprintf("0.0.0.0:%s", internal.GetPort())
 	server := &http.Server{Addr: addr, Handler: r}
 
 	// Create context that listens for the interrupt signal
@@ -83,7 +63,7 @@ func main() {
 
 	// Run server in the background
 	go func() {
-		log.Printf("Running registry service on port: %s", getPort())
+		log.Printf("Running registry service on port: %s", internal.GetPort())
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
