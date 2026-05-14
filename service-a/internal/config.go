@@ -7,7 +7,8 @@ import (
 	"strings"
 )
 
-const SVC = "svc-b"
+const SVC_A = "svc-a"
+const SVC_B = "svc-b"
 
 func GetRegistryURL() []string {
 	pointsStr := os.Getenv("REGISTRY_URL")
@@ -34,11 +35,6 @@ func GetAdvertiseAddr() string {
 	}
 
 	// Google DNS trick for finding the outbound IP
-	// UDP is connectionless, net.Dial does not initiate a "handshake" like TCP.
-	// It merely prepares the socket.
-	// The OS routing table decides which local IP to bind to the socket based
-	// on the destination address (8.8.8.8).
-	// Port doesn't matter since no connection is actually established.
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	port := GetPort()
 	if err != nil {

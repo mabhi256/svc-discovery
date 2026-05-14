@@ -9,31 +9,33 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mabhi256/svc-discovery/service-b/internal"
+	"github.com/mabhi256/svc-discovery/service-a/internal"
 )
 
-// Service B is the upstream service:
-//   1. On startup: POST /services to register its address.
-//   2. Every heartbeat_interval seconds: PUT /leases/{id}/heartbeat
-//   3. On SIGTERM: DELETE /services/{svc}/{id} (graceful deregister)
-//   4. Serve api on /health.
+// Service A is the consumer:
+//   1. Fetch all service B endpoints via GET /services/{svc}.
+//   2. Opens a persistent SSE watch via GET /watch/{svc}.
+//   3. Routes outbound RPCs through a local round-robin pool.
+//   4. Exposes GET /call-b so you can trigger a real proxied call.
 
 func main() {
 	cli := &http.Client{Timeout: 5 * time.Second}
-
-	registration, err := internal.Register(cli)
-	if err != nil {
-		log.Fatalf("%s", err.Error())
+	watchCli := &http.Client{}
+	pool := internal.NewPool()
+	service := &internal.Service{Cli: cli, Pool: pool}
+	if err := service.Init(); err != nil {
+		log.Println("init:", err)
 	}
-	addr := internal.GetAdvertiseAddr()
-	log.Printf("Registered svc=%s (address=%s) with lease=%s",
-		internal.SVC, addr, registration.LeaseID)
 
-	stopHeartbeat := internal.Heartbeat(cli, registration.LeaseID, registration.Heartbeat)
+	go internal.Watch(watchCli, pool)
 
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", internal.HealthCheckHandler)
+	mux.HandleFunc("GET /pool", service.PoolHandler)
+	mux.HandleFunc("GET /svc-b", service.ProxyHandler)
+	mux.HandleFunc("GET /health", service.HealthCheckHandler)
+
+	addr := internal.GetAdvertiseAddr()
 	srv := &http.Server{Addr: addr, Handler: mux}
 
 	// 2. Start server in a goroutine
@@ -56,9 +58,6 @@ func main() {
 	defer cancel()
 
 	// 5. Gracefully shut down
-	stopHeartbeat()
-	internal.Deregister(cli, registration.LeaseID)
-
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}

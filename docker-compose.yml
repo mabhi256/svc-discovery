@@ -124,8 +124,9 @@ services:
       dockerfile: service-a/Dockerfile
     environment:
       REGISTRY_URL: "http://registry:8500"
-      PORT: "9010"
+      PORT: "9000"
+      ADVERTISE_ADDR: "service-a:9000"
     ports:
-      - "9010:9010"
+      - "9010:9000"
     depends_on:
       - registry

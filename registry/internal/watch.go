@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -72,12 +71,5 @@ func sendSSE(ev *clientv3.Event, w http.ResponseWriter) {
 		eventType = DeleteEvent
 	}
 
-	payload := WatchEvent{Type: eventType, Address: string(ev.Kv.Value)}
-
-	data, err := json.Marshal(payload)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, data)
+	fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, string(ev.Kv.Value))
 }

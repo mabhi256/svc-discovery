@@ -39,8 +39,3 @@ const (
 	PutEvent    EventType = "put"
 	DeleteEvent EventType = "delete"
 )
-
-type WatchEvent struct {
-	Type    EventType `json:"type"`
-	Address string    `json:"address"`
-}
