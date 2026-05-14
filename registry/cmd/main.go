@@ -43,13 +43,13 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
 
 	registry := internal.NewRegistry(cli, validator.New())
-	r.Post("/services", registry.RegisterHandler)
-	r.Get("/services/{svc}", registry.ListHandler)
-	r.Delete("/services/{svc}/{id}", registry.DeregisterHandler)
-	r.Put("/leases/{id}/heartbeat", registry.HeartbeatHandler)
+	withTimeout := r.With(middleware.Timeout(60 * time.Second))
+	withTimeout.Post("/services", registry.RegisterHandler)
+	withTimeout.Get("/services/{svc}", registry.ListHandler)
+	withTimeout.Delete("/services/{svc}/{id}", registry.DeregisterHandler)
+	withTimeout.Put("/leases/{id}/heartbeat", registry.HeartbeatHandler)
 	r.Get("/watch/{svc}", registry.WatchHandler)
 
 	// https://github.com/go-chi/chi/blob/master/_examples/graceful/main.go

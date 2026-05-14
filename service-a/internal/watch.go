@@ -20,6 +20,7 @@ func Watch(cli *http.Client, pool *PoolMap) {
 			url = fmt.Sprintf("%s?revision=%d", url, rev+1)
 		}
 
+		log.Printf("Watch request to %s\n", url)
 		// Blocks until the connection drops.
 		// So the loop only moves to the next registry after a failure
 		if err := streamWatch(cli, url, pool); err != nil {
@@ -69,6 +70,7 @@ func streamWatch(cli *http.Client, url string, pool *PoolMap) error {
 		case strings.HasPrefix(line, "data:"):
 			addr := extractField(line, "data")
 
+			log.Printf("Watch event=%s addr=%s\n", evType, addr)
 			switch evType {
 			case PutEvent:
 				pool.Add(SVC_B, addr)

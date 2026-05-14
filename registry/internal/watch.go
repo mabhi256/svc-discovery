@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -32,19 +33,24 @@ func (registry *Registry) WatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 4. Start etcd watch (returns a channel)
 	ctx := r.Context()
-	prefix := fmt.Sprintf("services/%s/", svc)
+	prefix := fmt.Sprintf("/services/%s/", svc)
 	var watchCh clientv3.WatchChan
 
+	// For DELETE events etcd zeros out Kv.Value
+	// WithPrevKV() to the watch options tells etcd to include the previous key-value
 	revisionStr := r.URL.Query().Get("revision")
 	if revisionStr != "" {
 		revision, err := strconv.ParseInt(revisionStr, 10, 64)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
-		watchCh = registry.Etcd.Watch(ctx, prefix, clientv3.WithPrefix(), clientv3.WithRev(revision))
+		watchCh = registry.Etcd.Watch(ctx, prefix,
+			clientv3.WithPrefix(), clientv3.WithRev(revision), clientv3.WithPrevKV())
 	} else {
-		watchCh = registry.Etcd.Watch(ctx, prefix, clientv3.WithPrefix())
+		watchCh = registry.Etcd.Watch(ctx, prefix,
+			clientv3.WithPrefix(), clientv3.WithPrevKV())
 	}
+	log.Printf("Watch set up for prefix=%s\n", prefix)
 
 	for {
 		select {
@@ -54,6 +60,7 @@ func (registry *Registry) WatchHandler(w http.ResponseWriter, r *http.Request) {
 
 		case resp := <-watchCh:
 			for _, ev := range resp.Events {
+				log.Printf("Sending SSE event=%s key=%s rev=%d\n", ev.Type, string(ev.Kv.Key), ev.Kv.ModRevision)
 				sendSSE(ev, w)
 				flusher.Flush()
 			}
@@ -63,13 +70,16 @@ func (registry *Registry) WatchHandler(w http.ResponseWriter, r *http.Request) {
 
 func sendSSE(ev *clientv3.Event, w http.ResponseWriter) {
 	var eventType EventType
+	var value []byte
 
 	switch ev.Type {
 	case mvccpb.PUT:
 		eventType = PutEvent
+		value = ev.Kv.Value
 	case mvccpb.DELETE:
 		eventType = DeleteEvent
+		value = ev.PrevKv.Value
 	}
 
-	fmt.Fprintf(w, "id: %d\nevent: %s\ndata: %s\n\n", ev.Kv.ModRevision, eventType, string(ev.Kv.Value))
+	fmt.Fprintf(w, "id: %d\nevent: %s\ndata: %s\n\n", ev.Kv.ModRevision, eventType, string(value))
 }
