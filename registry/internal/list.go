@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -30,5 +31,6 @@ func (registry *Registry) ListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Etcd-Revision", strconv.FormatInt(resp.Header.Revision, 10))
 	json.NewEncoder(w).Encode(endpoints)
 }

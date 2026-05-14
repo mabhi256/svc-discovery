@@ -15,8 +15,21 @@ type pool struct {
 }
 
 type PoolMap struct {
-	mu    sync.Mutex
-	pools map[string]*pool
+	mu       sync.Mutex
+	pools    map[string]*pool
+	revision int64
+}
+
+func (pm *PoolMap) SetRevision(rev int64) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.revision = rev
+}
+
+func (pm *PoolMap) Revision() int64 {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	return pm.revision
 }
 
 func NewPool() *PoolMap {

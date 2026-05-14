@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 )
 
 func (service *Service) Init() error {
@@ -27,6 +28,9 @@ func (service *Service) Init() error {
 		}
 
 		service.Pool.Add(SVC_B, result...)
+
+		revision, _ := strconv.ParseInt(resp.Header.Get("X-Etcd-Revision"), 10, 64)
+		service.Pool.SetRevision(revision)
 		return nil
 	}
 

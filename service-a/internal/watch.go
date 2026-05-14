@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,6 +16,9 @@ func Watch(cli *http.Client, pool *PoolMap) {
 	for {
 		registry := registries[i]
 		url := fmt.Sprintf("%s/watch/%s", registry, SVC_B)
+		if rev := pool.Revision(); rev > 0 {
+			url = fmt.Sprintf("%s?revision=%d", url, rev+1)
+		}
 
 		// Blocks until the connection drops.
 		// So the loop only moves to the next registry after a failure
@@ -54,6 +58,11 @@ func streamWatch(cli *http.Client, url string, pool *PoolMap) error {
 	for scanner.Scan() {
 		line := scanner.Text()
 		switch {
+		case strings.HasPrefix(line, "id:"):
+			if rev, err := strconv.ParseInt(extractField(line, "id"), 10, 64); err == nil {
+				pool.SetRevision(rev)
+			}
+
 		case strings.HasPrefix(line, "event:"):
 			evType = EventType(extractField(line, "event"))
 

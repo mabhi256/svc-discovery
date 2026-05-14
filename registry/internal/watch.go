@@ -71,5 +71,5 @@ func sendSSE(ev *clientv3.Event, w http.ResponseWriter) {
 		eventType = DeleteEvent
 	}
 
-	fmt.Fprintf(w, "event: %s\ndata: %s\n\n", eventType, string(ev.Kv.Value))
+	fmt.Fprintf(w, "id: %d\nevent: %s\ndata: %s\n\n", ev.Kv.ModRevision, eventType, string(ev.Kv.Value))
 }

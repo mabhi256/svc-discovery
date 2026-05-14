@@ -32,7 +32,7 @@ func main() {
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /pool", service.PoolHandler)
-	mux.HandleFunc("GET /svc-b", service.ProxyHandler)
+	mux.HandleFunc("GET /call-b", service.ProxyHandler)
 	mux.HandleFunc("GET /health", service.HealthCheckHandler)
 
 	addr := internal.GetAdvertiseAddr()
