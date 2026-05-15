@@ -90,7 +90,13 @@ func (pm *PoolMap) Next(svc string) (string, error) {
 }
 
 func (service *Service) PoolHandler(w http.ResponseWriter, r *http.Request) {
-	addrs := service.Pool.Get(SVC_B)
+	service.Pool.mu.Lock()
+	snapshot := make(map[string][]string, len(service.Pool.pools))
+	for svc, p := range service.Pool.pools {
+		snapshot[svc] = slices.Clone(p.endpoints)
+	}
+	service.Pool.mu.Unlock()
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(addrs)
+	json.NewEncoder(w).Encode(snapshot)
 }

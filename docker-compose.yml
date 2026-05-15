@@ -95,26 +95,56 @@ services:
   service-b-1:
     build:
       context: .
-      dockerfile: service-b/Dockerfile
+      dockerfile: service-x/Dockerfile
     environment:
       REGISTRY_URL: "http://registry:8500"
+      SERVICE_NAME: "svc-b"
       PORT: "9000"
       ADVERTISE_ADDR: "service-b-1:9000"
     ports:
       - "9001:9000"
     depends_on:
       - registry
- 
+
   service-b-2:
     build:
       context: .
-      dockerfile: service-b/Dockerfile
+      dockerfile: service-x/Dockerfile
     environment:
       REGISTRY_URL: "http://registry:8500"
+      SERVICE_NAME: "svc-b"
       PORT: "9000"
       ADVERTISE_ADDR: "service-b-2:9000"
     ports:
       - "9002:9000"
+    depends_on:
+      - registry
+
+  service-c-1:
+    build:
+      context: .
+      dockerfile: service-x/Dockerfile
+    environment:
+      REGISTRY_URL: "http://registry:8500"
+      SERVICE_NAME: "svc-c"
+      PORT: "9000"
+      ADVERTISE_ADDR: "service-c-1:9000"
+    ports:
+      - "9003:9000"
+    depends_on:
+      - registry
+
+  service-c-2:
+    build:
+      context: .
+      dockerfile: service-x/Dockerfile
+    environment:
+      REGISTRY_URL: "http://registry:8500"
+      SERVICE_NAME: "svc-c"
+      PORT: "9000"
+      ADVERTISE_ADDR: "service-c-2:9000"
+    ports:
+      - "9004:9000"
     depends_on:
       - registry
 
@@ -124,6 +154,7 @@ services:
       dockerfile: service-a/Dockerfile
     environment:
       REGISTRY_URL: "http://registry:8500"
+      UPSTREAM_SERVICES: "svc-b,svc-c"
       PORT: "9000"
       ADVERTISE_ADDR: "service-a:9000"
     ports:

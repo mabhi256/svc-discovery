@@ -7,7 +7,13 @@ import (
 	"strings"
 )
 
-const SVC = "svc-b"
+func GetServiceName() string {
+	name := os.Getenv("SERVICE_NAME")
+	if name == "" {
+		return "svc-b"
+	}
+	return name
+}
 
 func GetRegistryURL() []string {
 	pointsStr := os.Getenv("REGISTRY_URL")

@@ -27,12 +27,14 @@ func main() {
 		log.Println("init:", err)
 	}
 
-	go internal.Watch(watchCli, pool)
+	for _, svc := range internal.GetUpstreamServices() {
+		go internal.Watch(watchCli, svc, pool)
+	}
 
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /pool", service.PoolHandler)
-	mux.HandleFunc("GET /call-b", service.ProxyHandler)
+	mux.HandleFunc("GET /proxy/{svc}", service.ProxyHandler)
 	mux.HandleFunc("GET /health", service.HealthCheckHandler)
 
 	addr := internal.GetAdvertiseAddr()

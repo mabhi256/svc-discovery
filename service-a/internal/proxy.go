@@ -7,7 +7,8 @@ import (
 )
 
 func (service *Service) ProxyHandler(w http.ResponseWriter, r *http.Request) {
-	addr, err := service.Pool.Next(SVC_B)
+	svc := r.PathValue("svc")
+	addr, err := service.Pool.Next(svc)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return

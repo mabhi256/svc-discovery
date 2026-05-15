@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mabhi256/svc-discovery/service-b/internal"
+	"github.com/mabhi256/svc-discovery/service-x/internal"
 )
 
 // Service B is the upstream service:
@@ -27,7 +27,7 @@ func main() {
 	}
 	addr := internal.GetAdvertiseAddr()
 	log.Printf("Registered svc=%s (address=%s) with lease=%s",
-		internal.SVC, addr, registration.LeaseID)
+		internal.GetServiceName(), addr, registration.LeaseID)
 
 	stopHeartbeat := internal.Heartbeat(cli, registration.LeaseID, registration.Heartbeat)
 

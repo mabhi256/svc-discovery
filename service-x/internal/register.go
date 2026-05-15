@@ -8,7 +8,7 @@ import (
 )
 
 func Register(cli *http.Client) (*RegisterResponse, error) {
-	body, err := json.Marshal(RegisterRequest{Service: SVC, Address: GetAdvertiseAddr()})
+	body, err := json.Marshal(RegisterRequest{Service: GetServiceName(), Address: GetAdvertiseAddr()})
 	if err != nil {
 		return nil, fmt.Errorf("marshal register request: %w", err)
 	}

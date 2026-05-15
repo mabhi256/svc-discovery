@@ -8,8 +8,16 @@ import (
 )
 
 func (service *Service) Init() error {
+	var lastErr error
+	for _, svc := range GetUpstreamServices() {
+		lastErr = service.initService(svc)
+	}
+	return lastErr
+}
+
+func (service *Service) initService(svc string) error {
 	for _, registry := range GetRegistryURL() {
-		url := fmt.Sprintf("%s/services/%s", registry, SVC_B)
+		url := fmt.Sprintf("%s/services/%s", registry, svc)
 		resp, err := service.Cli.Get(url)
 		if err != nil {
 			continue
@@ -27,12 +35,12 @@ func (service *Service) Init() error {
 			continue
 		}
 
-		service.Pool.Add(SVC_B, result...)
+		service.Pool.Add(svc, result...)
 
 		revision, _ := strconv.ParseInt(resp.Header.Get("X-Etcd-Revision"), 10, 64)
 		service.Pool.SetRevision(revision)
 		return nil
 	}
 
-	return fmt.Errorf("GET /services/%s: all registries unreachable", SVC_B)
+	return fmt.Errorf("GET /services/%s: all registries unreachable", svc)
 }

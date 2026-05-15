@@ -10,17 +10,17 @@ import (
 	"time"
 )
 
-func Watch(cli *http.Client, pool *PoolMap) {
+func Watch(cli *http.Client, svc string, pool *PoolMap) {
 	delay := time.Second
 	for {
 		for _, registry := range GetRegistryURL() {
-			url := fmt.Sprintf("%s/watch/%s", registry, SVC_B)
+			url := fmt.Sprintf("%s/watch/%s", registry, svc)
 			if rev := pool.Revision(); rev > 0 {
 				url = fmt.Sprintf("%s?revision=%d", url, rev+1)
 			}
 
 			log.Printf("Watch request to %s\n", url)
-			if err := streamWatch(cli, url, pool); err != nil {
+			if err := streamWatch(cli, url, svc, pool); err != nil {
 				log.Printf("watch %s lost: %v", registry, err)
 			}
 			time.Sleep(delay)
@@ -29,7 +29,7 @@ func Watch(cli *http.Client, pool *PoolMap) {
 	}
 }
 
-func streamWatch(cli *http.Client, url string, pool *PoolMap) error {
+func streamWatch(cli *http.Client, url string, svc string, pool *PoolMap) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
@@ -71,9 +71,9 @@ func streamWatch(cli *http.Client, url string, pool *PoolMap) error {
 			log.Printf("Watch event=%s addr=%s\n", evType, addr)
 			switch evType {
 			case PutEvent:
-				pool.Add(SVC_B, addr)
+				pool.Add(svc, addr)
 			case DeleteEvent:
-				pool.Remove(SVC_B, addr)
+				pool.Remove(svc, addr)
 			}
 		}
 	}

@@ -8,7 +8,14 @@ import (
 )
 
 const SVC_A = "svc-a"
-const SVC_B = "svc-b"
+
+func GetUpstreamServices() []string {
+	val := os.Getenv("UPSTREAM_SERVICES")
+	if val == "" {
+		return []string{"svc-b"}
+	}
+	return strings.Split(val, ",")
+}
 
 func GetRegistryURL() []string {
 	pointsStr := os.Getenv("REGISTRY_URL")
