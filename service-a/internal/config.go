@@ -1,8 +1,6 @@
 package internal
 
 import (
-	"fmt"
-	"net"
 	"os"
 	"strings"
 )
@@ -40,16 +38,5 @@ func GetAdvertiseAddr() string {
 	if addr != "" {
 		return addr
 	}
-
-	// Google DNS trick for finding the outbound IP
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	port := GetPort()
-	if err != nil {
-		return "127.0.0.1:" + port
-	}
-	defer conn.Close()
-
-	ip := conn.LocalAddr().(*net.UDPAddr).IP.String()
-
-	return fmt.Sprintf("%s:%s", ip, port)
+	return "service-a:9000"
 }

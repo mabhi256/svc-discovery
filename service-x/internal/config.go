@@ -34,11 +34,6 @@ func GetPort() string {
 }
 
 func GetAdvertiseAddr() string {
-	addr := os.Getenv("ADVERTISE_ADDR")
-	if addr != "" {
-		return addr
-	}
-
 	// Google DNS trick for finding the outbound IP
 	// UDP is connectionless, net.Dial does not initiate a "handshake" like TCP.
 	// It merely prepares the socket.
