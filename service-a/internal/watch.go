@@ -11,23 +11,21 @@ import (
 )
 
 func Watch(cli *http.Client, pool *PoolMap) {
-	registries := GetRegistryURL()
-	i := 0
+	delay := time.Second
 	for {
-		registry := registries[i]
-		url := fmt.Sprintf("%s/watch/%s", registry, SVC_B)
-		if rev := pool.Revision(); rev > 0 {
-			url = fmt.Sprintf("%s?revision=%d", url, rev+1)
-		}
+		for _, registry := range GetRegistryURL() {
+			url := fmt.Sprintf("%s/watch/%s", registry, SVC_B)
+			if rev := pool.Revision(); rev > 0 {
+				url = fmt.Sprintf("%s?revision=%d", url, rev+1)
+			}
 
-		log.Printf("Watch request to %s\n", url)
-		// Blocks until the connection drops.
-		// So the loop only moves to the next registry after a failure
-		if err := streamWatch(cli, url, pool); err != nil {
-			log.Printf("watch %s lost: %v", registry, err)
+			log.Printf("Watch request to %s\n", url)
+			if err := streamWatch(cli, url, pool); err != nil {
+				log.Printf("watch %s lost: %v", registry, err)
+			}
+			time.Sleep(delay)
+			delay = min(delay*2, 5*time.Second)
 		}
-		i = (i + 1) % len(registries)
-		time.Sleep(2 * time.Second)
 	}
 }
 
