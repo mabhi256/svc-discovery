@@ -36,8 +36,8 @@ func (registry *Registry) WatchHandler(w http.ResponseWriter, r *http.Request) {
 	prefix := fmt.Sprintf("/services/%s/", svc)
 	var watchCh clientv3.WatchChan
 
-	// For DELETE events etcd zeros out Kv.Value
-	// WithPrevKV() to the watch options tells etcd to include the previous key-value
+	// DELETE event clears Kv.Value in etcd. WithPrevKV() in
+	// watch options tells etcd to include the previous key-value
 	revisionStr := r.URL.Query().Get("revision")
 	if revisionStr != "" {
 		revision, err := strconv.ParseInt(revisionStr, 10, 64)
