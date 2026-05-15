@@ -76,6 +76,18 @@ func (pm *PoolMap) Get(svc string) []string {
 	return slices.Clone(p.endpoints)
 }
 
+func (pm *PoolMap) Len(svc string) int {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	p := pm.pools[svc]
+	if p == nil {
+		return 0
+	}
+
+	return len(p.endpoints)
+}
+
 // Used for round robin
 func (pm *PoolMap) Next(svc string) (string, error) {
 	pm.mu.Lock()

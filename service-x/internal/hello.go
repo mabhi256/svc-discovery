@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	hostname, _ := os.Hostname()
 	resp := map[string]string{
-		"status":   "ok",
+		"message":  "Hello",
 		"hostname": fmt.Sprintf("%s-%s", GetServiceName(), hostname),
 		"time":     time.Now().UTC().Format(time.RFC3339),
 	}

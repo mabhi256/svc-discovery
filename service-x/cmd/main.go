@@ -33,7 +33,8 @@ func main() {
 
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", internal.HealthCheckHandler)
+	mux.HandleFunc("GET /health", healthCheckHandler)
+	mux.HandleFunc("GET /hello", internal.HelloHandler)
 	srv := &http.Server{Addr: addr, Handler: mux}
 
 	// 2. Start server in a goroutine
@@ -63,4 +64,8 @@ func main() {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 	log.Println("Server shutdown done")
+}
+
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
 }
