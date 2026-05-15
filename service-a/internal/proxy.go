@@ -17,9 +17,9 @@ func (service *Service) ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		url := fmt.Sprintf("http://%s/hello", addr)
 		resp, err := service.Cli.Get(url)
 		if err != nil {
-			// counter will drift after Remove() but we don't care if
+			// Len value will drift after SetActive(false) but we don't care if
 			// we try an endpoint twice, since we only try N times
-			service.Pool.Remove(svc, addr)
+			service.Pool.SetActive(svc, addr, false)
 			continue
 		}
 		defer resp.Body.Close()

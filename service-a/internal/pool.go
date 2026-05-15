@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"slices"
 	"sync"
 	"sync/atomic"
 )
 
+type endpoint struct {
+	addr   string
+	active bool
+}
+
 type pool struct {
-	endpoints []string
+	endpoints []*endpoint
 	counter   atomic.Uint64
 }
 
@@ -43,7 +47,9 @@ func (pm *PoolMap) Add(svc string, addr ...string) {
 	if pm.pools[svc] == nil {
 		pm.pools[svc] = &pool{}
 	}
-	pm.pools[svc].endpoints = append(pm.pools[svc].endpoints, addr...)
+	for _, a := range addr {
+		pm.pools[svc].endpoints = append(pm.pools[svc].endpoints, &endpoint{addr: a, active: true})
+	}
 }
 
 func (pm *PoolMap) Remove(svc string, addr string) error {
@@ -56,7 +62,7 @@ func (pm *PoolMap) Remove(svc string, addr string) error {
 	}
 
 	for i, e := range p.endpoints {
-		if e == addr {
+		if e.addr == addr {
 			p.endpoints = append(p.endpoints[:i], p.endpoints[i+1:]...)
 			return nil
 		}
@@ -64,16 +70,20 @@ func (pm *PoolMap) Remove(svc string, addr string) error {
 	return nil
 }
 
-func (pm *PoolMap) Get(svc string) []string {
+func (pm *PoolMap) SetActive(svc string, addr string, active bool) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
 	p := pm.pools[svc]
-	if p == nil || len(p.endpoints) == 0 {
-		return []string{}
+	if p == nil {
+		return
 	}
-
-	return slices.Clone(p.endpoints)
+	for _, e := range p.endpoints {
+		if e.addr == addr {
+			e.active = active
+			return
+		}
+	}
 }
 
 func (pm *PoolMap) Len(svc string) int {
@@ -88,7 +98,7 @@ func (pm *PoolMap) Len(svc string) int {
 	return len(p.endpoints)
 }
 
-// Used for round robin
+// Used for round robin — skips inactive endpoints
 func (pm *PoolMap) Next(svc string) (string, error) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
@@ -97,18 +107,34 @@ func (pm *PoolMap) Next(svc string) (string, error) {
 	if p == nil || len(p.endpoints) == 0 {
 		return "", errors.New("no endpoints")
 	}
-	idx := (p.counter.Add(1) - 1) % uint64(len(p.endpoints))
-	return p.endpoints[idx], nil
+
+	n := uint64(len(p.endpoints))
+	start := p.counter.Add(1) - 1
+	for i := range n {
+		e := p.endpoints[(start+i)%n]
+		if e.active {
+			return e.addr, nil
+		}
+	}
+	return "", errors.New("no active endpoints")
 }
 
-func (service *Service) PoolHandler(w http.ResponseWriter, r *http.Request) {
+func (service *Service) Snapshot() map[string][]string {
 	service.Pool.mu.Lock()
 	snapshot := make(map[string][]string, len(service.Pool.pools))
 	for svc, p := range service.Pool.pools {
-		snapshot[svc] = slices.Clone(p.endpoints)
+		addrs := make([]string, len(p.endpoints))
+		for i, e := range p.endpoints {
+			addrs[i] = e.addr
+		}
+		snapshot[svc] = addrs
 	}
 	service.Pool.mu.Unlock()
 
+	return snapshot
+}
+
+func (service *Service) PoolHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(snapshot)
+	json.NewEncoder(w).Encode(service.Snapshot())
 }

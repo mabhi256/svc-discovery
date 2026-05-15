@@ -30,6 +30,7 @@ func main() {
 	for _, svc := range internal.GetUpstreamServices() {
 		go internal.Watch(watchCli, svc, pool)
 	}
+	stopPinging := service.PingUpstream() // callback to stop pinging
 
 	// 1. Setup ServeMux and Server
 	mux := http.NewServeMux()
@@ -60,6 +61,7 @@ func main() {
 	defer cancel()
 
 	// 5. Gracefully shut down
+	stopPinging()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
